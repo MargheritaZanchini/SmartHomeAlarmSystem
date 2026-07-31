@@ -1,5 +1,7 @@
 package smartHomeAlarm
 
+import java.util.UUID
+
 object smartHomeAlarmProtocol:
 
   enum sensorsType:
@@ -14,6 +16,7 @@ object smartHomeAlarmProtocol:
     case EntryDelay
     case Emergency
 
+  final case class MotionDetected(sensorID: UUID)
 
   export sensorsType.*
   export cuStates.*

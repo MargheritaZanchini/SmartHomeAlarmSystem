@@ -20,9 +20,14 @@ object Sensor:
   val intervalMin = 10
   val intervalMax = 60
 
-  def apply(sensorType: sensorsType):Behavior[Command] =
-    Behaviors.withTimers: timers =>
-      active(timers)
+  def apply(sensorType: sensorsType, sensorID: UUID, replyTo: ActorRef[MotionDetected]):Behavior[Command] =
+    Behaviors.setup { context =>
+      Behaviors.withTimers { timers =>
+        //appena nasce si invia da solo il messaggio per iniziare ad aspettare (altrimenti non parte)
+        context.self ! Waiting(sensorID, replyTo)
+        active(timers)
+      }
+    }
 
   private def active(timers: TimerScheduler[Command]
                     ): Behavior[Command] =

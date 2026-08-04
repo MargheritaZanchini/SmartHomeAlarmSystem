@@ -5,7 +5,7 @@ import java.util.UUID
 object smartHomeAlarmProtocol:
 
   enum sensorsType:
-    case PIRDoar
+    case PIRDoor
     case PIRLivingRoom
     case WindowSensor
 

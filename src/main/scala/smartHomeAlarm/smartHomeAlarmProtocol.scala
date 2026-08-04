@@ -16,7 +16,12 @@ object smartHomeAlarmProtocol:
     case EntryDelay
     case Emergency
 
+  final case class TryPin(pin: String)
+
   final case class MotionDetected(sensorID: UUID)
+
+  final case class AlarmStarting()
+
 
   export sensorsType.*
   export cuStates.*

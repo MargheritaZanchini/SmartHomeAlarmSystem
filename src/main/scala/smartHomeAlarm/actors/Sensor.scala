@@ -7,7 +7,7 @@ import org.apache.pekko.actor.typed.*
 import scala.util.Random
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 object Sensor:
   import smartHomeAlarm.smartHomeAlarmProtocol.*
@@ -17,8 +17,8 @@ object Sensor:
     case Detection(sensorID: UUID, replyTo: ActorRef[MotionDetected])
   export Command.*
   //intervallo minimo e massimo per la rilevazione di un movimento
-  val intervalMin = 10
-  val intervalMax = 60
+  private val IntervalMinSeconds = 10
+  private val IntervalMaxSeconds = 60
 
   def apply(sensorType: sensorsType, sensorID: UUID, replyTo: ActorRef[MotionDetected]):Behavior[Command] =
     Behaviors.setup { context =>
@@ -35,9 +35,10 @@ object Sensor:
       message match
         //caso in cui l'attore ottiene un messaggio Waiting
         case Waiting(sensorID, replyTo) =>
-          val delay = Random.between(intervalMin, intervalMax)
+          
+          val delay = Random.between(IntervalMinSeconds, IntervalMaxSeconds + 1).seconds
+          timers.startSingleTimer(Detection(sensorID, replyTo), delay)
           //fa partire un timer di un delay random e al termine di questo invia a sé stesso (sensore) un messaggio Detection
-          timers.startSingleTimer(Detection(sensorID, replyTo), FiniteDuration(delay, TimeUnit.SECONDS))
           context.log.info("Motion detection in sensor {} in {} seconds", sensorID, delay)
           Behaviors.same
         //caso in cui l'attore ottiene un messaggio Detection

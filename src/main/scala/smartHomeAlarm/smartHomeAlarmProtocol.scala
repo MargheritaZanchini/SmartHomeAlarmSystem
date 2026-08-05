@@ -9,13 +9,6 @@ object smartHomeAlarmProtocol:
     case PIRLivingRoom
     case WindowSensor
 
-  enum cuStates:
-    case Disarmed
-    case ExitDelay
-    case Armed
-    case EntryDelay
-    case Emergency
-
   final case class TryPin(pin: String)
 
   final case class MotionDetected(sensorID: UUID)
@@ -24,4 +17,3 @@ object smartHomeAlarmProtocol:
 
 
   export sensorsType.*
-  export cuStates.*

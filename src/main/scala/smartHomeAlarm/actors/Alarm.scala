@@ -34,15 +34,15 @@ object Alarm:
         case TurnOn() =>
           context.log.info("Starting alarm countdown: {} seconds", IntervalDelaySeconds.toSeconds)
 
-          // Programma il timer mandando a SE STESSO il messaggio privato EntryTimeout(replyTo)
+          //programma il timer mandando a se stesso il messaggio privato EntryTimeout(replyTo)
           timers.startSingleTimer(
             SensorTimerKey,
-            EntryTimeout(), // <--- Messaggio interno per il timer
+            EntryTimeout(), //messaggio interno per il timer
             IntervalDelaySeconds
           )
           Behaviors.same
 
-        //timer scaduto! l'attore riceve il messaggio da se stesso
+        //timer scaduto, l'attore riceve il messaggio da se stesso
         case EntryTimeout() =>
           context.log.warn("Entry delay expired! Triggering alarm signal...")
           replyTo ! AlarmStarting() //invia la notifica all'esterno

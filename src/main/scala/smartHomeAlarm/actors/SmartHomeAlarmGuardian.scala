@@ -2,9 +2,8 @@ package smartHomeAlarm.actors
 
 import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.{Behavior, *}
-import smartHomeAlarm.smartHomeAlarmProtocol.cuStates.Disarmed
 import smartHomeAlarm.smartHomeAlarmProtocol.sensorsType.{PIRDoor, PIRLivingRoom, WindowSensor}
-import smartHomeAlarm.smartHomeAlarmProtocol.{AlarmStarting, MotionDetected, TryPin, cuStates}
+import smartHomeAlarm.smartHomeAlarmProtocol.{AlarmStarting, MotionDetected, TryPin}
 
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
@@ -55,7 +54,7 @@ object SmartHomeAlarmGuardian:
 
   private def disarmed(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                       ): Behavior[Command] =
-    Behaviors.receive: (context, message) =>
+    Behaviors.receive: (contexta, message) =>
       message match
         case PinEntered(TryPin(triedPin)) =>
           if (triedPin.equals(pin)) then
@@ -70,7 +69,7 @@ object SmartHomeAlarmGuardian:
 
   private def exitDelay(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                        ): Behavior[Command] =
-    Behaviors.receive: (context, message) =>
+    Behaviors.receive: (contexta, message) =>
       Behaviors.withTimers { timers =>
         timers.startSingleTimer(exitTimerKey, FinishTimer(), varExitDelay)
 
@@ -87,19 +86,18 @@ object SmartHomeAlarmGuardian:
 
   private def armed(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                    ): Behavior[Command] =
-    Behaviors.receive: (context, message) =>
-      message match
-        case PinEntered(_) => Behaviors.same
-        case Command.DetectedMovement(MotionDetected(sensorID)) =>
-          context.log.info("Going to entry delay.")
-          alarm ! Alarm.TurnOn()
-          entryDelay(context, alarm)
-        case _ => Behaviors.same
+    Behaviors.receiveMessagePartial:
+      case Command.DetectedMovement(MotionDetected(sensorID)) =>
+        context.log.info("Going to entry delay.")
+        alarm ! Alarm.TurnOn()
+        entryDelay(context, alarm)
+      case PinEntered(_) => Behaviors.same
+      case _ => Behaviors.same
 
 
   private def entryDelay(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                         ): Behavior[Command] =
-    
+
     Behaviors.receiveMessagePartial:
 
       case PinEntered(TryPin(triedPin)) =>
@@ -107,7 +105,6 @@ object SmartHomeAlarmGuardian:
           context.log.info("PIN correct. Turning off the alarm and going to disarmed.")
           alarm ! Alarm.Off() //diciamo all'allarme di fermarsi
           disarmed(context, alarm)
-          Behaviors.same
         } else {
           context.log.warn("incorrect PIN. Retry.")
           Behaviors.same
@@ -116,14 +113,13 @@ object SmartHomeAlarmGuardian:
       case AlarmStarted(_) =>
         context.log.error("going to emergency.")
         emergency(context, alarm)
+
+      case Command.DetectedMovement(_) =>
         Behaviors.same
 
-      case Command.DetectedMovement(_) => Behaviors.same
-
-      case _ => Behaviors.same
-
-
-    Behaviors.same
+      case _ =>
+        Behaviors.same
+  
 
   private def emergency(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                        ): Behavior[Command] =
@@ -135,7 +131,6 @@ object SmartHomeAlarmGuardian:
           context.log.info("PIN correct. Emergency stopped. Going to disarmed.")
           alarm ! Alarm.Off() //diciamo all'allarme di fermarsi
           disarmed(context, alarm)
-          Behaviors.same
         } else {
           context.log.warn("incorrect PIN. RING RING RING! Retry.")
           Behaviors.same

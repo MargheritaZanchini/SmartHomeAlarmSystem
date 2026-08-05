@@ -7,6 +7,7 @@ import smartHomeAlarm.smartHomeAlarmProtocol.sensorsType.{PIRDoor, PIRLivingRoom
 import smartHomeAlarm.smartHomeAlarmProtocol.{AlarmStarting, MotionDetected, TryPin, cuStates}
 
 import java.util.UUID
+import scala.concurrent.duration.DurationInt
 
 object SmartHomeAlarmGuardian:
   //spawn actors e set up
@@ -19,11 +20,13 @@ object SmartHomeAlarmGuardian:
 
   export Command.*
   val pin: String = "1234"
+  private case object exitTimerKey
   private val UUIDDoor = UUID.randomUUID()
   private val UUIDLivingRoom = UUID.randomUUID()
   private val UUIDWindow1 = UUID.randomUUID()
   private val UUIDWindow2 = UUID.randomUUID()
-  
+  private val exitDelay = 15.seconds
+  private val entryDelay = 20.seconds
   //finite state machine
 
   def apply() :
@@ -53,12 +56,62 @@ object SmartHomeAlarmGuardian:
       message match
         case PinEntered(TryPin(triedPin)) =>
           if( triedPin.equals(pin)) then
-            exitDelay()
+            exitDelay(context)
         case Command.DetectedMovement(_) => Behaviors.same
         case Command.AlarmStarted(_) => Behaviors.same
 
       Behaviors.same
 
 
-  private def exitDelay() = ???
-  private def entryDelay() = ???
+  private def exitDelay(context: ActorContext[Command],
+
+                       ): Behavior[Command] =
+    Behaviors.receive:(context, message) =>
+      message match
+        case PinEntered(_) => Behaviors.same
+        case Command.DetectedMovement(_) => Behaviors.same
+        case Command.AlarmStarted(_) => Behaviors.same
+
+
+      Behaviors.same
+
+  private def armed(context: ActorContext[Command],
+
+                   ): Behavior[Command] =
+    Behaviors.receive:(context, message) =>
+      message match
+        case PinEntered(_) => Behaviors.same
+        case Command.DetectedMovement(MotionDetected(sensorID)) =>
+
+          entryDelay(context)
+        case Command.AlarmStarted(_) => Behaviors.same
+
+      Behaviors.same
+
+  private def entryDelay(context: ActorContext[Command],
+
+                        ): Behavior[Command] =
+    Behaviors.receive:(context, message) =>
+      Behaviors.withTimers { timers =>
+        //eventuality in armed
+        timers.startSingleTimer(exitTimerKey,emergency(context), entryDelay)
+        timers.startSingleTimer(exitTimerKey,AlarmStarting(), entryDelay)
+        message match
+          case PinEntered(TryPin(triedPin)) =>
+            if( triedPin.equals(pin)) then {
+              timers.cancel(exitTimerKey)
+              disarmed(context)
+            }
+          case Command.DetectedMovement(_) => Behaviors.same
+          case Command.AlarmStarted(_) => Behaviors.same
+
+        Behaviors.same
+      }
+
+
+      Behaviors.same
+
+  private def emergency(context: ActorContext[Command],
+
+                       ): Behavior[Command] =
+    ???

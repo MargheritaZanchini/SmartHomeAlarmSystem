@@ -68,20 +68,20 @@ object SmartHomeAlarmGuardian:
 
 
   private def exitDelay(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
-                       ): Behavior[Command] =
-    Behaviors.receive: (contexta, message) =>
-      Behaviors.withTimers { timers =>
-        timers.startSingleTimer(exitTimerKey, FinishTimer(), varExitDelay)
+                       ): Behavior[Command] = {
+    Behaviors.withTimers { timers =>
+      timers.startSingleTimer(exitTimerKey, FinishTimer(), varExitDelay)
 
-        message match
-          case FinishTimer() =>
-            context.log.info("Exit delay finished. Going to armed.")
-            armed(context, alarm)
-          case PinEntered(_) => Behaviors.same
-          case Command.DetectedMovement(_) => Behaviors.same
-          case _ => Behaviors.same
+      Behaviors.receiveMessagePartial:
+        case FinishTimer() =>
+          context.log.info("Exit delay finished. Going to armed.")
+          armed(context, alarm)
+        case PinEntered(_) => Behaviors.same
+        case Command.DetectedMovement(_) => Behaviors.same
+        case _ => Behaviors.same
+    }
+  }
 
-      }
 
 
   private def armed(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
@@ -119,7 +119,7 @@ object SmartHomeAlarmGuardian:
 
       case _ =>
         Behaviors.same
-  
+
 
   private def emergency(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                        ): Behavior[Command] =

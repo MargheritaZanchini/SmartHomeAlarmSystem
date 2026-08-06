@@ -91,7 +91,8 @@ object SmartHomeAlarmGuardian:
               context.log.info("DayMode selcted. Going to Exit Delay.")
               exitDelay(context, alarm, modes.DayMode.activeZones)
         case _ =>
-          context.log.warn("Incorrect Number. Try again.")
+          context.log.warn("Incorrect Number. " +
+            "\nChoose modality: \n1: FullMode \n2: NighMode \n3: DayMode")
           Behaviors.same
   }
 

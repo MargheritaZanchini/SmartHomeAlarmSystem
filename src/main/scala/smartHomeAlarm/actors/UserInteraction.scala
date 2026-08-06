@@ -13,27 +13,27 @@ object UserInteraction:
   import smartHomeAlarm.smartHomeAlarmProtocol.*
 
   enum Command:
-    case WaitPin()
-    case SendPin(pin: String)
+    case WaitInput()
+    case SendInput(input: String)
 
   export Command.*
 
-  def apply(replyTo: ActorRef[TryPin]): Behavior[Command] = 
+  def apply(replyTo: ActorRef[TryInput]): Behavior[Command] = 
   Behaviors.setup { context =>
-    context.self ! WaitPin()
+    context.self ! WaitInput()
     active(replyTo)
   }
 
-  private def active(replyTo: ActorRef[TryPin]):Behavior[Command] =
+  private def active(replyTo: ActorRef[TryInput]):Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
-        case WaitPin() =>
+        case WaitInput() =>
 
           startAsyncKeyboardReading(context)
           Behaviors.same
-        case SendPin(pin) =>
-          replyTo ! TryPin(pin)
-          context.self ! WaitPin()
+        case SendInput(input) =>
+          replyTo ! TryInput(input)
+          context.self ! WaitInput()
           Behaviors.same
 
 
@@ -42,5 +42,5 @@ object UserInteraction:
       val input = StdIn.readLine()
       if input != null then
         // Invia il testo letto all'attore stesso in modo thread-safe
-        context.self ! SendPin(input)
+        context.self ! SendInput(input)
     }

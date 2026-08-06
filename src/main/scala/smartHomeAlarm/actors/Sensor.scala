@@ -6,7 +6,6 @@ import org.apache.pekko.actor.typed.*
 
 import scala.util.Random
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 object Sensor:

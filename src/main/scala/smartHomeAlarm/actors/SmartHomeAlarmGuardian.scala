@@ -7,7 +7,6 @@ import smartHomeAlarm.smartHomeAlarmProtocol.zones.{Garden, GroundFloor, UpperFl
 
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
-import scala.io.StdIn
 
 object SmartHomeAlarmGuardian:
 
@@ -59,13 +58,14 @@ object SmartHomeAlarmGuardian:
 
       disarmed(context, alarm)
 
-
   private def disarmed(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                       ): Behavior[Command] =
     Behaviors.receive: (contexta, message) =>
       message match
+
+        //se il pin giusto viene inserito l'utente seleziona la modalità
         case InputEntered(TryInput(triedPin)) =>
-          if (triedPin.equals(pin)) then
+          if triedPin.equals(pin) then
             context.log.info("Pin Correct. \nChoose modality: \n1: FullMode \n2: NighMode \n3: DayMode")
             chooseModality(context, alarm)
           else {
@@ -77,6 +77,7 @@ object SmartHomeAlarmGuardian:
   private def chooseModality(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                             ): Behavior[Command] = {
     Behaviors.receive: (contexta, message) =>
+      //l'utente sceglie una modalità
       message match
         case InputEntered(TryInput(triedInput)) =>
           triedInput match
@@ -95,6 +96,7 @@ object SmartHomeAlarmGuardian:
   private def exitDelay(context: ActorContext[Command], alarm: ActorRef[Alarm.Command],
                         activeMode: List[zones]
                        ): Behavior[Command] = {
+    //viene iniziato un timer in cui i sensori non triggherano nulla per permettere all'utente di uscire di casa
     Behaviors.withTimers { timers =>
       timers.startSingleTimer(exitTimerKey, FinishTimer(), varExitDelay)
 
@@ -108,11 +110,12 @@ object SmartHomeAlarmGuardian:
     }
   }
 
-  
+
   private def armed(context: ActorContext[Command], alarm: ActorRef[Alarm.Command],
                     activeMode: List[zones]
                    ): Behavior[Command] =
     Behaviors.receiveMessagePartial:
+      //se vengono rilevati movimenti nella zona attiva selezionati andiamo in entry delay
       case Command.DetectedMovement(MotionDetected(sensorID)) =>
         if activeMode.contains(sensorForZone(sensorID)) then
           context.log.info("Going to entry delay.")
@@ -125,12 +128,12 @@ object SmartHomeAlarmGuardian:
 
 
   private def entryDelay(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
-                        ): Behavior[Command] =
+                        ): Behavior[Command] = {
 
+    //se l'utente inserisce il pin entro il timer l'allarme non suona
     Behaviors.receiveMessagePartial:
-
       case InputEntered(TryInput(triedPin)) =>
-        if (triedPin.equals(pin)) then {
+        if triedPin.equals(pin) then {
           context.log.info("PIN correct. Turning off the alarm and going to disarmed.")
           alarm ! Alarm.Off() //diciamo all'allarme di fermarsi
           disarmed(context, alarm)
@@ -148,6 +151,7 @@ object SmartHomeAlarmGuardian:
 
       case _ =>
         Behaviors.same
+  }
 
 
   private def emergency(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
@@ -156,7 +160,7 @@ object SmartHomeAlarmGuardian:
     Behaviors.receiveMessagePartial:
 
       case InputEntered(TryInput(triedPin))  =>
-        if (triedPin.equals(pin)) then {
+        if triedPin.equals(pin) then {
           context.log.info("PIN correct. Emergency stopped. Going to disarmed.")
           alarm ! Alarm.Off() //diciamo all'allarme di fermarsi
           disarmed(context, alarm)

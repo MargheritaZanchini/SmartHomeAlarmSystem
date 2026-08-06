@@ -90,7 +90,9 @@ object SmartHomeAlarmGuardian:
             case "3" =>
               context.log.info("DayMode selcted. Going to Exit Delay.")
               exitDelay(context, alarm, modes.DayMode.activeZones)
-        case _ => Behaviors.same
+        case _ =>
+          context.log.warn("Incorrect Number. Try again.")
+          Behaviors.same
   }
 
   private def exitDelay(context: ActorContext[Command], alarm: ActorRef[Alarm.Command],

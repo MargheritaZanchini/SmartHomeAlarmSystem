@@ -66,7 +66,7 @@ object SmartHomeAlarmGuardian:
         //se il pin giusto viene inserito l'utente seleziona la modalità
         case InputEntered(TryInput(triedPin)) =>
           if triedPin.equals(pin) then
-            context.log.info("Pin Correct. \nChoose modality: \n1: FullMode \n2: NighMode \n3: DayMode")
+            context.log.info("Pin Correct. \nChoose modality: \n1: FullMode \n2: NightMode \n3: DayMode")
             chooseModality(context, alarm)
           else {
             context.log.warn("Incorrect PIN. Retry.")
@@ -82,17 +82,17 @@ object SmartHomeAlarmGuardian:
         case InputEntered(TryInput(triedInput)) =>
           triedInput match
             case "1" =>
-              context.log.info("FullMode selcted. Going to Exit Delay.")
+              context.log.info("FullMode selected. Going to Exit Delay.")
               exitDelay(context, alarm, modes.FullMode.activeZones)
             case "2" =>
-              context.log.info("NightMode selcted. Going to Exit Delay.")
+              context.log.info("NightMode selected. Going to Exit Delay.")
               exitDelay(context, alarm, modes.NightMode.activeZones)
             case "3" =>
-              context.log.info("DayMode selcted. Going to Exit Delay.")
+              context.log.info("DayMode selected. Going to Exit Delay.")
               exitDelay(context, alarm, modes.DayMode.activeZones)
         case _ =>
           context.log.warn("Incorrect Number. " +
-            "\nChoose modality: \n1: FullMode \n2: NighMode \n3: DayMode")
+            "\nChoose modality: \n1: FullMode \n2: NightMode \n3: DayMode")
           Behaviors.same
   }
 

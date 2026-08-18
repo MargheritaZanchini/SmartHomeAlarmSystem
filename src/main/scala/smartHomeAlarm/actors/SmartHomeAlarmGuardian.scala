@@ -58,6 +58,18 @@ object SmartHomeAlarmGuardian:
 
       disarmed(context, alarm)
 
+  private def recovery(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
+                      ): Behavior[Command] =
+    Behaviors.receiveMessagePartial:
+        case InputEntered(TryInput(triedPin)) =>
+          if triedPin.equals(pin) then {
+            context.log.info("Pin Correct. Going from recovery to disarmed.")
+            disarmed(context, alarm)
+          } else {
+            Behaviors.same
+          }
+        case _ => Behaviors.same
+
   private def disarmed(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                       ): Behavior[Command] =
     Behaviors.receive: (contexta, message) =>

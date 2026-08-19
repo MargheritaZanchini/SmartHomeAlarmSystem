@@ -2,6 +2,7 @@ package smartHomeAlarm.actors
 
 import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.{Behavior, *}
+import smartHomeAlarm.CborSerializable
 import smartHomeAlarm.smartHomeAlarmProtocol.*
 import smartHomeAlarm.smartHomeAlarmProtocol.zones.{Garden, GroundFloor, UpperFloor}
 
@@ -12,7 +13,7 @@ object SmartHomeAlarmGuardian:
 
   //spawn actors e set up
 
-  enum Command:
+  enum Command extends CborSerializable:
     case DetectedMovement(event: MotionDetected)
     case InputEntered(event: TryInput)
     case AlarmStarted(event: AlarmStarting)

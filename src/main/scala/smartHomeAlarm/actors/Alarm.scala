@@ -2,6 +2,8 @@ package smartHomeAlarm.actors
 
 import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.*
+import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
+
 import scala.concurrent.duration.*
 
 object Alarm:
@@ -14,14 +16,19 @@ object Alarm:
     case EntryTimeout()
   export Command.*
 
+  val alarmServiceKey = ServiceKey[Command]("alarm")
   private val IntervalDelaySeconds = 15.seconds
   private case object SensorTimerKey
 
-  def apply(replyTo: ActorRef[AlarmStarting]): Behavior[Command] =
+  def apply(): Behavior[Command] =
     Behaviors.withTimers: timers =>
-      active(timers, replyTo)
+      Behaviors.setup: context =>
+        val router = context.spawn(Routers.group(SmartHomeAlarmGuardian.guardianServiceKey), "guardian")
+        context.system.receptionist ! Receptionist.Register(alarmServiceKey, context.self)
+        active(timers, router)
+  
 
-  private def active(timers: TimerScheduler[Command], replyTo: ActorRef[AlarmStarting]): Behavior[Command] =
+  private def active(timers: TimerScheduler[Command], router: ActorRef[AlarmStarting]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         //disattivazione
@@ -45,5 +52,5 @@ object Alarm:
         //timer scaduto, l'attore riceve il messaggio da se stesso
         case EntryTimeout() =>
           context.log.warn("Entry delay expired! Triggering alarm signal...")
-          replyTo ! AlarmStarting() //invia la notifica all'esterno
+          router ! AlarmStarting() //invia la notifica all'esterno
           Behaviors.same

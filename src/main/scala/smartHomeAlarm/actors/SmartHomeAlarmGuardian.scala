@@ -1,5 +1,6 @@
 package smartHomeAlarm.actors
 
+import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
 import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.{Behavior, *}
 import smartHomeAlarm.CborSerializable
@@ -21,6 +22,8 @@ object SmartHomeAlarmGuardian:
 
   export Command.*
 
+  val guardianServiceKey = ServiceKey[AlarmStarting]("Guardian")
+  
   val pin: String = "1234"
 
   private case object exitTimerKey
@@ -51,8 +54,14 @@ object SmartHomeAlarmGuardian:
       val sensorWindow1 = context.spawn(Sensor(WindowSensor, UUIDWindow1, motionAdapter), "SensorWindow1")
       val sensorWindow2 = context.spawn(Sensor(WindowSensor, UUIDWindow2, motionAdapter), "SensorWindow2")
 
-      val alarmAdapter = context.messageAdapter[AlarmStarting](AlarmStarted.apply)
-      val alarm = context.spawn(Alarm(alarmAdapter), "Alarm")
+      val alarm = context.spawn(Routers.group(Alarm.alarmServiceKey), "Alarm")
+      //val alarmAdapter = context.messageAdapter[AlarmStarting](AlarmStarted.apply)
+//      val resultAdapter = context.messageAdapter[AlarmStarting](AlarmStarted.apply)
+      val alarmAdapter = context.messageAdapter[Receptionist.Listing]:
+        case Alarm.alarmServiceKey.Listing(AlarmStarting) => AlarmStarted(AlarmStarting.apply())
+      //val alarm = context.spawn(Alarm(alarmAdapter), "Alarm")
+      
+      context.system.receptionist ! Receptionist.subscribe(Alarm.alarmServiceKey, alarmAdapter)
 
       val inputAdapter = context.messageAdapter[TryInput](InputEntered.apply)
       val userInteraction = context.spawn(UserInteraction(inputAdapter), "keyboardPin")

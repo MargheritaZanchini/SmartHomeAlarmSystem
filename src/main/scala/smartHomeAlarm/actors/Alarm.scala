@@ -23,7 +23,7 @@ object Alarm:
   def apply(): Behavior[Command] =
     Behaviors.withTimers: timers =>
       Behaviors.setup: context =>
-        val router = context.spawn(Routers.group(SmartHomeAlarmGuardian.guardianServiceKey), "guardian")
+        val router = context.spawn(Routers.group(SmartHomeAlarmGuardian.guardianAlarmServiceKey), "guardian")
         context.system.receptionist ! Receptionist.Register(alarmServiceKey, context.self)
         active(timers, router)
   

@@ -4,6 +4,8 @@ import com.typesafe.config.ConfigFactory
 import smartHomeAlarm.actors.{Alarm, Sensor, SmartHomeAlarmGuardian, UserInteraction}
 import org.apache.pekko.actor.typed.*
 
+import java.util.UUID
+
 object SmartHomeAlarmApp:
 //  @main def app(): Unit =
 //
@@ -17,7 +19,8 @@ object SmartHomeAlarmApp:
 
   @main def spawnSensor(): Unit =
     val config = ConfigFactory.load("application.conf")
-    val _ = ActorSystem[Sensor.Command](Sensor(), "Clustered-SmartHomeAlarmSystem")
+    val UUIDsensor = UUID.randomUUID()
+    val _ = ActorSystem[Sensor.Command](Sensor(UUIDsensor), "Clustered-SmartHomeAlarmSystem")
 
   @main def spawnKeypad(): Unit =
     val config = ConfigFactory.load("application.conf")

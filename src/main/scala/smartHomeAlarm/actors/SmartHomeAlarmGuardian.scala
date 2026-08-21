@@ -22,7 +22,9 @@ object SmartHomeAlarmGuardian:
 
   export Command.*
 
-  val guardianServiceKey = ServiceKey[AlarmStarting]("Guardian")
+  val guardianAlarmServiceKey = ServiceKey[AlarmStarting]("GuardianAlarm")
+  val guardianSensorServiceKey = ServiceKey[MotionDetected]("GuardianSensor")
+  val guardianKeypadServiceKey = ServiceKey[TryInput]("GuardianKeypad")
   
   val pin: String = "1234"
 
@@ -47,12 +49,12 @@ object SmartHomeAlarmGuardian:
   def apply():
   Behavior[Command] =
     Behaviors.setup: context =>
-      val motionAdapter = context.messageAdapter[MotionDetected](DetectedMovement.apply)
+      //val motionAdapter = context.messageAdapter[MotionDetected](DetectedMovement.apply)
 
-      val sensorDoor = context.spawn(Sensor(PIRDoor, UUIDDoor, motionAdapter), "SensorDoor")
-      val sensorLivingRoom = context.spawn(Sensor(PIRLivingRoom, UUIDLivingRoom, motionAdapter), "SensorLivingRoom")
-      val sensorWindow1 = context.spawn(Sensor(WindowSensor, UUIDWindow1, motionAdapter), "SensorWindow1")
-      val sensorWindow2 = context.spawn(Sensor(WindowSensor, UUIDWindow2, motionAdapter), "SensorWindow2")
+      val sensorDoor = context.spawn(Sensor(PIRDoor, UUIDDoor), "SensorDoor")
+      val sensorLivingRoom = context.spawn(Sensor(PIRLivingRoom, UUIDLivingRoom), "SensorLivingRoom")
+      val sensorWindow1 = context.spawn(Sensor(WindowSensor, UUIDWindow1), "SensorWindow1")
+      val sensorWindow2 = context.spawn(Sensor(WindowSensor, UUIDWindow2), "SensorWindow2")
 
       val alarm = context.spawn(Routers.group(Alarm.alarmServiceKey), "Alarm")
       //val alarmAdapter = context.messageAdapter[AlarmStarting](AlarmStarted.apply)

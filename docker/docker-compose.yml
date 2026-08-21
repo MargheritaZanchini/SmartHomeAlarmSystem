@@ -13,7 +13,7 @@ services:
   sensors_garden:
     build:
       context: ../
-      dockerfile: Dockerfile.sensors
+      dockerfile: docker/Dockerfile.sensors
     environment:
       - CLUSTER_IP=sensors_garden
       - CLUSTER_PORT=2551

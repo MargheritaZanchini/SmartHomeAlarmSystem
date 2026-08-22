@@ -1,14 +1,14 @@
 services:
-  smartHome:
+  smarthome:
     build:
       context: ../
       dockerfile: docker/Dockerfile.controlUnit
     ports:
       - "1600:1600"
     environment:
-      - CLUSTER_IP=smartHome
+      - CLUSTER_IP=smarthome
       - CLUSTER_PORT=1600
-      - SMARTHOME_PORT_1600_TCP_ADDR=smartHome
+      - SMARTHOME_PORT_1600_TCP_ADDR=smarthome
 
   sensors:
     build:
@@ -17,7 +17,7 @@ services:
     environment:
       - CLUSTER_IP=sensors
       - CLUSTER_PORT=2551
-      - SMARTHOME_PORT_1600_TCP_ADDR=smartHome
+      - SMARTHOME_PORT_1600_TCP_ADDR=smarthome
 
   keypad:
     build:
@@ -26,7 +26,7 @@ services:
     environment:
       - CLUSTER_IP=keypad
       - CLUSTER_PORT=2552
-      - SMARTHOME_PORT_1600_TCP_ADDR=smartHome
+      - SMARTHOME_PORT_1600_TCP_ADDR=smarthome
 
   alarm:
     build:
@@ -35,4 +35,4 @@ services:
     environment:
       - CLUSTER_IP=alarm
       - CLUSTER_PORT=2553
-      - SMARTHOME_PORT_1600_TCP_ADDR=smartHome
+      - SMARTHOME_PORT_1600_TCP_ADDR=smarthome

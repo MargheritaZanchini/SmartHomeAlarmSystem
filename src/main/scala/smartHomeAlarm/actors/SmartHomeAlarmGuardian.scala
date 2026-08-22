@@ -22,9 +22,6 @@ object SmartHomeAlarmGuardian:
 
   export Command.*
 
-  //val guardianAlarmServiceKey = ServiceKey[AlarmStarting]("GuardianAlarm")
-  val guardianSensorServiceKey = ServiceKey[MotionDetected]("GuardianSensor")
-  val guardianKeypadServiceKey = ServiceKey[TryInput]("GuardianKeypad")
   val guardianServiceKey = ServiceKey[Command]("Guardian")
   
   val pin: String = "1234"
@@ -51,23 +48,23 @@ object SmartHomeAlarmGuardian:
   Behavior[Command] =
     Behaviors.setup: context =>
 
-      val sensorDoor = context.spawn(Sensor(PIRDoor, UUIDDoor), "SensorDoor")
-      val sensorLivingRoom = context.spawn(Sensor(PIRLivingRoom, UUIDLivingRoom), "SensorLivingRoom")
-      val sensorWindow1 = context.spawn(Sensor(WindowSensor, UUIDWindow1), "SensorWindow1")
-      val sensorWindow2 = context.spawn(Sensor(WindowSensor, UUIDWindow2), "SensorWindow2")
-      
       context.system.receptionist ! Receptionist.Register(guardianServiceKey, context.self)
+
       val alarm = context.spawn(Routers.group(Alarm.alarmServiceKey), "Alarm")
-      
-      //--val alarmAdapter = context.messageAdapter[Receptionist.Listing]:
-        //--case Alarm.alarmServiceKey.Listing(AlarmStarting) => AlarmStarted(AlarmStarting.apply())
-      
-      
-      //--context.system.receptionist ! Receptionist.subscribe(Alarm.alarmServiceKey, alarmAdapter)
+      val userInteraction = context.spawn(Routers.group(UserInteraction.keyPadServiceKey), "keyboardPin")
 
-      val inputAdapter = context.messageAdapter[TryInput](InputEntered.apply)
-      val userInteraction = context.spawn(UserInteraction(inputAdapter), "keyboardPin")
+      val sensorList = List(PIRDoor, PIRLivingRoom, WindowSensor, WindowSensor)
+      sensorList.foreach { sensorType =>
+        val id = UUID.randomUUID()
+        context.spawn(Sensor(sensorType, id), s"sensor-$sensorType-$id")
+      }
 
+      /*val sensorDoor = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorDoor")
+      val sensorLivingRoom = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorLivingRoom")
+      val sensorWindow1 = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorWindow1")
+      val sensorWindow2 = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorWindow2")
+*/
+      
       disarmed(context, alarm)
 
   private def recovery(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]

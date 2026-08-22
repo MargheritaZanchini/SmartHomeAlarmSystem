@@ -4,6 +4,7 @@ import org.apache.pekko.actor.typed.Behavior
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
 import org.apache.pekko.actor.typed.scaladsl.*
+import smartHomeAlarm.actors.SmartHomeAlarmGuardian.Command.InputEntered
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -17,16 +18,17 @@ object UserInteraction:
     case SendInput(input: String)
 
   export Command.*
-  private val keyPadServiceKey = ServiceKey[Command]("keyPad")
+  val keyPadServiceKey = ServiceKey[Command]("keyPad")
+  
   def apply(): Behavior[Command] = 
   Behaviors.setup { context =>
     context.self ! WaitInput()
-    val router = context.spawn(Routers.group(SmartHomeAlarmGuardian.guardianKeypadServiceKey), "guardian")
+    val router = context.spawn(Routers.group(SmartHomeAlarmGuardian.guardianServiceKey), "guardian")
     context.system.receptionist ! Receptionist.Register(keyPadServiceKey, context.self)
     active(router)
   }
 
-  private def active(router: ActorRef[TryInput]):Behavior[Command] =
+  private def active(router: ActorRef[SmartHomeAlarmGuardian.Command]):Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         case WaitInput() =>
@@ -34,7 +36,7 @@ object UserInteraction:
           startAsyncKeyboardReading(context)
           Behaviors.same
         case SendInput(input) =>
-          router ! TryInput(input)
+          router ! InputEntered(TryInput(input))
           context.self ! WaitInput()
           Behaviors.same
 
@@ -43,6 +45,6 @@ object UserInteraction:
     Future {
       val input = StdIn.readLine()
       if input != null then
-        // Invia il testo letto all'attore stesso in modo thread-safe
+        //invia il testo letto all'attore stesso in modo thread-safe
         context.self ! SendInput(input)
     }

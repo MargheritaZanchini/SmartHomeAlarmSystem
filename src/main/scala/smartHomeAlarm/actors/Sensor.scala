@@ -5,6 +5,9 @@ import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
 import smartHomeAlarm.actors.Alarm.alarmServiceKey
+import smartHomeAlarm.actors.Sensor.Command
+import smartHomeAlarm.actors.SmartHomeAlarmGuardian.Command.DetectedMovement
+import smartHomeAlarm.smartHomeAlarmProtocol.sensorsType.*
 
 import scala.util.Random
 import java.util.UUID
@@ -27,7 +30,7 @@ object Sensor:
   def apply(sensorType: sensorsType, sensorID: UUID):Behavior[Command] =
     Behaviors.setup { context =>
       Behaviors.withTimers { timers =>
-        val sensorRouter = context.spawn(Routers.group(SmartHomeAlarmGuardian.guardianSensorServiceKey), "guardian")
+        val sensorRouter = context.spawn(Routers.group(SmartHomeAlarmGuardian.guardianServiceKey), "guardian")
         context.system.receptionist ! Receptionist.Register(sensorServiceKey, context.self)
         //appena nasce si invia da solo il messaggio per iniziare ad aspettare (altrimenti non parte)
         context.self ! Waiting(sensorID, sensorType)
@@ -35,7 +38,7 @@ object Sensor:
       }
     }
 
-  private def active(timers: TimerScheduler[Command], router: ActorRef[MotionDetected]
+  private def active(timers: TimerScheduler[Command], router: ActorRef[SmartHomeAlarmGuardian.Command]
                     ): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
@@ -51,7 +54,16 @@ object Sensor:
         case Detection(sensorID, sensorType) =>
           context.log.info("Motion detected in sensor {}", sensorType)
           //risponde alla SmartHome che un movimento è stato rilevato
-          router ! MotionDetected(sensorID)
+          router ! DetectedMovement(MotionDetected(sensorID))
           //manda un messaggio a sè stesso dicendosi di rimettersi in Waiting
           context.self ! Waiting(sensorID, sensorType)
           Behaviors.same
+          
+object SensorRouter:
+  def apply(): Behavior[Unit] = Behaviors.setup: ctx =>
+    val sensorList = List(PIRDoor, PIRLivingRoom, WindowSensor, WindowSensor)
+    sensorList.foreach { sensorType =>
+      val id = UUID.randomUUID()
+      ctx.spawn(Sensor(sensorType, id), s"sensor-$sensorType-$id")
+    }
+    Behaviors.empty

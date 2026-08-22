@@ -10,31 +10,13 @@ services:
       - CLUSTER_PORT=1600
       - SMARTHOME_PORT_1600_TCP_ADDR=smartHome
 
-  sensors_garden:
+  sensors:
     build:
       context: ../
       dockerfile: docker/Dockerfile.sensors
     environment:
-      - CLUSTER_IP=sensors_garden
+      - CLUSTER_IP=sensors
       - CLUSTER_PORT=2551
-      - SMARTHOME_PORT_1600_TCP_ADDR=smartHome
-
-  sensors_groundFloor:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile.sensors
-    environment:
-      - CLUSTER_IP=sensors_groundFloor
-      - CLUSTER_PORT=2552
-      - SMARTHOME_PORT_1600_TCP_ADDR=smartHome
-
-  sensors_upperFloor:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile.sensors
-    environment:
-      - CLUSTER_IP=sensors_upperFloor
-      - CLUSTER_PORT=2553
       - SMARTHOME_PORT_1600_TCP_ADDR=smartHome
 
   keypad:
@@ -43,7 +25,7 @@ services:
       dockerfile: docker/Dockerfile.keypad
     environment:
       - CLUSTER_IP=keypad
-      - CLUSTER_PORT=2554
+      - CLUSTER_PORT=2552
       - SMARTHOME_PORT_1600_TCP_ADDR=smartHome
 
   alarm:
@@ -52,5 +34,5 @@ services:
       dockerfile: docker/Dockerfile.alarm
     environment:
       - CLUSTER_IP=alarm
-      - CLUSTER_PORT=2555
+      - CLUSTER_PORT=2553
       - SMARTHOME_PORT_1600_TCP_ADDR=smartHome

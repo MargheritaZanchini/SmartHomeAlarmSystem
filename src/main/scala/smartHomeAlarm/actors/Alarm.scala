@@ -3,6 +3,7 @@ package smartHomeAlarm.actors
 import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
+import smartHomeAlarm.actors.SmartHomeAlarmGuardian.Command.AlarmStarted
 
 import scala.concurrent.duration.*
 
@@ -52,5 +53,5 @@ object Alarm:
         //timer scaduto, l'attore riceve il messaggio da se stesso
         case EntryTimeout() =>
           context.log.warn("Entry delay expired! Triggering alarm signal...")
-          router ! SmartHomeAlarmGuardian.Command.AlarmStarted(AlarmStarting()) //invia la notifica all'esterno
+          router ! AlarmStarted(AlarmStarting()) //invia la notifica all'esterno
           Behaviors.same

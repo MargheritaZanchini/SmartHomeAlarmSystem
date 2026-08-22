@@ -1,8 +1,9 @@
 package smartHomeAlarm
 
 import com.typesafe.config.ConfigFactory
-import smartHomeAlarm.actors.{Alarm, Sensor, SmartHomeAlarmGuardian, UserInteraction}
+import smartHomeAlarm.actors.{Alarm, Sensor, SensorRouter, SmartHomeAlarmGuardian, UserInteraction}
 import org.apache.pekko.actor.typed.*
+import smartHomeAlarm.smartHomeAlarmProtocol.sensorsType.*
 
 import java.util.UUID
 
@@ -19,8 +20,7 @@ object SmartHomeAlarmApp:
 
   @main def spawnSensor(): Unit =
     val config = ConfigFactory.load("application.conf")
-    val UUIDsensor = UUID.randomUUID()
-    val _ = ActorSystem[Sensor.Command](Sensor(UUIDsensor), "Clustered-SmartHomeAlarmSystem")
+    val _ = ActorSystem[Unit](SensorRouter(), "Clustered-SmartHomeAlarmSystem", config)
 
   @main def spawnKeypad(): Unit =
     val config = ConfigFactory.load("application.conf")
@@ -29,4 +29,3 @@ object SmartHomeAlarmApp:
   @main def spawnControlUnit(): Unit =
     val config = ConfigFactory.load("application.conf")
     val _ = ActorSystem[SmartHomeAlarmGuardian.Command](SmartHomeAlarmGuardian(), "Clustered-SmartHomeAlarmSystem")
-          

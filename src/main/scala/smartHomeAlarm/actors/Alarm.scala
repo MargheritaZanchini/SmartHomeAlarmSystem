@@ -23,12 +23,12 @@ object Alarm:
   def apply(): Behavior[Command] =
     Behaviors.withTimers: timers =>
       Behaviors.setup: context =>
-        val router = context.spawn(Routers.group(SmartHomeAlarmGuardian.guardianAlarmServiceKey), "guardian")
+        val router = context.spawn(Routers.group(SmartHomeAlarmGuardian.guardianServiceKey), "guardian")
         context.system.receptionist ! Receptionist.Register(alarmServiceKey, context.self)
         active(timers, router)
   
 
-  private def active(timers: TimerScheduler[Command], router: ActorRef[AlarmStarting]): Behavior[Command] =
+  private def active(timers: TimerScheduler[Command], router: ActorRef[SmartHomeAlarmGuardian.Command]): Behavior[Command] =
     Behaviors.receive: (context, message) =>
       message match
         //disattivazione
@@ -52,5 +52,5 @@ object Alarm:
         //timer scaduto, l'attore riceve il messaggio da se stesso
         case EntryTimeout() =>
           context.log.warn("Entry delay expired! Triggering alarm signal...")
-          router ! AlarmStarting() //invia la notifica all'esterno
+          router ! SmartHomeAlarmGuardian.Command.AlarmStarted(AlarmStarting()) //invia la notifica all'esterno
           Behaviors.same

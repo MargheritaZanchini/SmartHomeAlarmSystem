@@ -22,9 +22,10 @@ object SmartHomeAlarmGuardian:
 
   export Command.*
 
-  val guardianAlarmServiceKey = ServiceKey[AlarmStarting]("GuardianAlarm")
+  //val guardianAlarmServiceKey = ServiceKey[AlarmStarting]("GuardianAlarm")
   val guardianSensorServiceKey = ServiceKey[MotionDetected]("GuardianSensor")
   val guardianKeypadServiceKey = ServiceKey[TryInput]("GuardianKeypad")
+  val guardianServiceKey = ServiceKey[Command]("Guardian")
   
   val pin: String = "1234"
 
@@ -49,21 +50,20 @@ object SmartHomeAlarmGuardian:
   def apply():
   Behavior[Command] =
     Behaviors.setup: context =>
-      //val motionAdapter = context.messageAdapter[MotionDetected](DetectedMovement.apply)
 
       val sensorDoor = context.spawn(Sensor(PIRDoor, UUIDDoor), "SensorDoor")
       val sensorLivingRoom = context.spawn(Sensor(PIRLivingRoom, UUIDLivingRoom), "SensorLivingRoom")
       val sensorWindow1 = context.spawn(Sensor(WindowSensor, UUIDWindow1), "SensorWindow1")
       val sensorWindow2 = context.spawn(Sensor(WindowSensor, UUIDWindow2), "SensorWindow2")
-
-      val alarm = context.spawn(Routers.group(Alarm.alarmServiceKey), "Alarm")
-      //val alarmAdapter = context.messageAdapter[AlarmStarting](AlarmStarted.apply)
-//      val resultAdapter = context.messageAdapter[AlarmStarting](AlarmStarted.apply)
-      val alarmAdapter = context.messageAdapter[Receptionist.Listing]:
-        case Alarm.alarmServiceKey.Listing(AlarmStarting) => AlarmStarted(AlarmStarting.apply())
-      //val alarm = context.spawn(Alarm(alarmAdapter), "Alarm")
       
-      context.system.receptionist ! Receptionist.subscribe(Alarm.alarmServiceKey, alarmAdapter)
+      context.system.receptionist ! Receptionist.Register(guardianServiceKey, context.self)
+      val alarm = context.spawn(Routers.group(Alarm.alarmServiceKey), "Alarm")
+      
+      //--val alarmAdapter = context.messageAdapter[Receptionist.Listing]:
+        //--case Alarm.alarmServiceKey.Listing(AlarmStarting) => AlarmStarted(AlarmStarting.apply())
+      
+      
+      //--context.system.receptionist ! Receptionist.subscribe(Alarm.alarmServiceKey, alarmAdapter)
 
       val inputAdapter = context.messageAdapter[TryInput](InputEntered.apply)
       val userInteraction = context.spawn(UserInteraction(inputAdapter), "keyboardPin")

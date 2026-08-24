@@ -25,11 +25,7 @@ object SmartHomeAlarmGuardian:
   val pin: String = "1234"
 
   private case object exitTimerKey
-
-  private val UUIDDoor = UUID.randomUUID()
-  private val UUIDLivingRoom = UUID.randomUUID()
-  private val UUIDWindow1 = UUID.randomUUID()
-  private val UUIDWindow2 = UUID.randomUUID()
+  
   private val varExitDelay = 15.seconds
   private val varEntryDelay = 20.seconds
 
@@ -38,30 +34,18 @@ object SmartHomeAlarmGuardian:
     UUIDWindow2 -> UpperFloor,
     UUIDDoor -> Garden)
 
-
-
   //finite state machine
 
   def apply():
   Behavior[Command] =
     Behaviors.setup: context =>
 
+      //il guardian si registra al receptionist in modo che gli altri possano mandargli messaggi
       context.system.receptionist ! Receptionist.Register(guardianServiceKey, context.self)
 
+      //vengono definiti i router per mandare i messaggi all'alarm e al userInteraction
       val alarm = context.spawn(Routers.group(Alarm.alarmServiceKey), "Alarm")
       val userInteraction = context.spawn(Routers.group(UserInteraction.keyPadServiceKey), "keyboardPin")
-
-//      val sensorList = List(PIRDoor, PIRLivingRoom, WindowSensor, WindowSensor)
-//      sensorList.foreach { sensorType =>
-//        val id = UUID.randomUUID()
-//        context.spawn(Sensor(sensorType, id), s"sensor-$sensorType-$id")
-//      }
-
-      /*val sensorDoor = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorDoor")
-      val sensorLivingRoom = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorLivingRoom")
-      val sensorWindow1 = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorWindow1")
-      val sensorWindow2 = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorWindow2")
-*/
       
       disarmed(context, alarm)
 

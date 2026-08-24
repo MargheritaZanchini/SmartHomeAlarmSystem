@@ -5,10 +5,8 @@ import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
 import smartHomeAlarm.CborSerializable
-import smartHomeAlarm.actors.Alarm.alarmServiceKey
-import smartHomeAlarm.actors.Sensor.Command
 import smartHomeAlarm.actors.SmartHomeAlarmGuardian.DetectedMovement
-import smartHomeAlarm.smartHomeAlarmProtocol.sensorsType.*
+import smartHomeAlarm.smartHomeAlarmProtocol.*
 
 import scala.util.Random
 import java.util.UUID
@@ -21,7 +19,7 @@ object Sensor:
   sealed trait Command extends CborSerializable
   private final case class Waiting(sensorID: UUID, sensorType: sensorsType) extends Command
   private final case class Detection(sensorID: UUID, sensorType: sensorsType) extends Command
-  
+
   //intervallo minimo e massimo per la rilevazione di un movimento
   private val IntervalMinSeconds = 10
   private val IntervalMaxSeconds = 60
@@ -62,9 +60,11 @@ object Sensor:
           
 object SensorRouter:
   def apply(): Behavior[Unit] = Behaviors.setup: ctx =>
-    val sensorList = List(PIRDoor, PIRLivingRoom, WindowSensor, WindowSensor)
-    sensorList.foreach { sensorType =>
-      val id = UUID.randomUUID()
-      ctx.spawn(Sensor(sensorType, id), s"sensor-$sensorType-$id")
-    }
+   
+   //vengono creati i sensori con gli UUID definiti nel protocol 
+    val sensorDoor = ctx.spawn(Sensor(PIRDoor, UUIDDoor), "SensorDoor")
+    val sensorLivingRoom = ctx.spawn(Sensor(PIRLivingRoom, UUIDLivingRoom), "SensorLivingRoom")
+    val sensorWindow1 = ctx.spawn(Sensor(WindowSensor, UUIDWindow1), "SensorWindow1")
+    val sensorWindow2 = ctx.spawn(Sensor(WindowSensor, UUIDWindow2), "SensorWindow2")
+    
     Behaviors.empty

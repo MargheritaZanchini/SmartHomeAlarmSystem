@@ -24,7 +24,7 @@ object smartHomeAlarmProtocol:
 
   final case class MotionDetected(sensorID: UUID)
 
-  final case class AlarmStarting()
+  //final case class AlarmStarting()
 
 
   export sensorsType.*

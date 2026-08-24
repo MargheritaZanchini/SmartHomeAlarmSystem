@@ -14,14 +14,12 @@ object SmartHomeAlarmGuardian:
 
   //spawn actors e set up
 
-  enum Command extends CborSerializable:
-    case DetectedMovement(event: MotionDetected)
-    case InputEntered(event: TryInput)
-    case AlarmStarted(event: AlarmStarting)
-    case FinishTimer()
-
-  export Command.*
-
+  sealed trait Command extends CborSerializable
+  final case class DetectedMovement(event: MotionDetected) extends Command
+  final case class InputEntered(event: TryInput) extends Command
+  final case class AlarmStarted() extends Command
+  final case class FinishTimer() extends Command
+  
   val guardianServiceKey = ServiceKey[Command]("Guardian")
   
   val pin: String = "1234"
@@ -53,11 +51,11 @@ object SmartHomeAlarmGuardian:
       val alarm = context.spawn(Routers.group(Alarm.alarmServiceKey), "Alarm")
       val userInteraction = context.spawn(Routers.group(UserInteraction.keyPadServiceKey), "keyboardPin")
 
-      val sensorList = List(PIRDoor, PIRLivingRoom, WindowSensor, WindowSensor)
-      sensorList.foreach { sensorType =>
-        val id = UUID.randomUUID()
-        context.spawn(Sensor(sensorType, id), s"sensor-$sensorType-$id")
-      }
+//      val sensorList = List(PIRDoor, PIRLivingRoom, WindowSensor, WindowSensor)
+//      sensorList.foreach { sensorType =>
+//        val id = UUID.randomUUID()
+//        context.spawn(Sensor(sensorType, id), s"sensor-$sensorType-$id")
+//      }
 
       /*val sensorDoor = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorDoor")
       val sensorLivingRoom = context.spawn(Routers.group(Sensor.sensorServiceKey), "SensorLivingRoom")
@@ -129,7 +127,7 @@ object SmartHomeAlarmGuardian:
           context.log.info("Exit delay finished. Going to armed.")
           armed(context, alarm, activeMode)
         case InputEntered(_) => Behaviors.same
-        case Command.DetectedMovement(_) => Behaviors.same
+        case DetectedMovement(_) => Behaviors.same
         case _ => Behaviors.same
     }
   }
@@ -140,7 +138,7 @@ object SmartHomeAlarmGuardian:
                    ): Behavior[Command] =
     Behaviors.receiveMessagePartial:
       //se vengono rilevati movimenti nella zona attiva selezionati andiamo in entry delay
-      case Command.DetectedMovement(MotionDetected(sensorID)) =>
+      case DetectedMovement(MotionDetected(sensorID)) =>
         if activeMode.contains(sensorForZone(sensorID)) then
           context.log.info("Going to entry delay.")
           alarm ! Alarm.TurnOn()
@@ -166,11 +164,11 @@ object SmartHomeAlarmGuardian:
           Behaviors.same
         }
 
-      case AlarmStarted(_) =>
+      case AlarmStarted() =>
         context.log.error("going to emergency.")
         emergency(context, alarm)
 
-      case Command.DetectedMovement(_) =>
+      case DetectedMovement(_) =>
         Behaviors.same
 
       case _ =>

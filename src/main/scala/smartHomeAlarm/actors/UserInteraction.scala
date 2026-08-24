@@ -4,7 +4,8 @@ import org.apache.pekko.actor.typed.Behavior
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
 import org.apache.pekko.actor.typed.scaladsl.*
-import smartHomeAlarm.actors.SmartHomeAlarmGuardian.Command.InputEntered
+import smartHomeAlarm.CborSerializable
+import smartHomeAlarm.actors.SmartHomeAlarmGuardian.InputEntered
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -13,11 +14,10 @@ import scala.io.StdIn
 object UserInteraction:
   import smartHomeAlarm.smartHomeAlarmProtocol.*
 
-  enum Command:
-    case WaitInput()
-    case SendInput(input: String)
-
-  export Command.*
+  sealed trait Command extends CborSerializable
+  private final case class WaitInput() extends Command
+  private final case class SendInput(input: String) extends Command
+  
   val keyPadServiceKey = ServiceKey[Command]("keyPad")
   
   def apply(): Behavior[Command] = 

@@ -3,7 +3,8 @@ package smartHomeAlarm.actors
 import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
-import smartHomeAlarm.actors.SmartHomeAlarmGuardian.Command.AlarmStarted
+import smartHomeAlarm.CborSerializable
+import smartHomeAlarm.actors.SmartHomeAlarmGuardian.AlarmStarted
 
 import scala.concurrent.duration.*
 
@@ -11,11 +12,11 @@ object Alarm:
 
   import smartHomeAlarm.smartHomeAlarmProtocol.*
 
-  enum Command:
-    case Off()
-    case TurnOn()
-    case EntryTimeout()
-  export Command.*
+  sealed trait Command extends CborSerializable
+  final case class Off() extends Command
+  final case class TurnOn() extends Command
+  private final case class EntryTimeout() extends Command
+
 
   val alarmServiceKey = ServiceKey[Command]("alarm")
   private val IntervalDelaySeconds = 15.seconds
@@ -53,5 +54,5 @@ object Alarm:
         //timer scaduto, l'attore riceve il messaggio da se stesso
         case EntryTimeout() =>
           context.log.warn("Entry delay expired! Triggering alarm signal...")
-          router ! AlarmStarted(AlarmStarting()) //invia la notifica all'esterno
+          router ! SmartHomeAlarmGuardian.AlarmStarted() //invia la notifica all'esterno
           Behaviors.same

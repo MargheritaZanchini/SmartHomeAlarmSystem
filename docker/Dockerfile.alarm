@@ -4,11 +4,11 @@ WORKDIR /app
 COPY . .
 
 ENV MAIN_CLASS=smartHomeAlarm.spawnAlarm
-RUN sbt "set cluster / assembly / mainClass := Some(\"$MAIN_CLASS\")" "cluster / assembly"
+RUN sbt "set assembly / mainClass := Some(\"$MAIN_CLASS\")" "assembly"
 
 FROM eclipse-temurin:25.0.3_9-jre
 
 WORKDIR /app
-COPY --from=builder /app/cluster/target/cluster.jar /app/cluster.jar
+COPY --from=builder /app/target/app.jar /app/app.jar
 
-ENTRYPOINT ["java", "-jar", "cluster.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

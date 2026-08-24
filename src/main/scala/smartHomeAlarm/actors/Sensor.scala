@@ -4,9 +4,10 @@ package smartHomeAlarm.actors
 import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.*
 import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
+import smartHomeAlarm.CborSerializable
 import smartHomeAlarm.actors.Alarm.alarmServiceKey
 import smartHomeAlarm.actors.Sensor.Command
-import smartHomeAlarm.actors.SmartHomeAlarmGuardian.Command.DetectedMovement
+import smartHomeAlarm.actors.SmartHomeAlarmGuardian.DetectedMovement
 import smartHomeAlarm.smartHomeAlarmProtocol.sensorsType.*
 
 import scala.util.Random
@@ -17,10 +18,10 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 object Sensor:
   import smartHomeAlarm.smartHomeAlarmProtocol.*
   //il sensore può ricevere due messaggi: waiting o detection
-  enum Command:
-    case Waiting(sensorID: UUID, sensorType: sensorsType)
-    case Detection(sensorID: UUID, sensorType: sensorsType)
-  export Command.*
+  sealed trait Command extends CborSerializable
+  private final case class Waiting(sensorID: UUID, sensorType: sensorsType) extends Command
+  private final case class Detection(sensorID: UUID, sensorType: sensorsType) extends Command
+  
   //intervallo minimo e massimo per la rilevazione di un movimento
   private val IntervalMinSeconds = 10
   private val IntervalMaxSeconds = 60

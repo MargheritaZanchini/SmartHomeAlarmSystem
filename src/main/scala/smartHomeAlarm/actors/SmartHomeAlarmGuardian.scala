@@ -19,7 +19,7 @@ object SmartHomeAlarmGuardian:
   final case class InputEntered(event: TryInput) extends Command
   final case class AlarmStarted() extends Command
   final case class FinishTimer() extends Command
-  
+
   val guardianServiceKey = ServiceKey[Command]("Guardian")
   
   val pin: String = "1234"

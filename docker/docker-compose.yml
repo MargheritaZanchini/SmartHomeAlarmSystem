@@ -23,6 +23,8 @@ services:
     build:
       context: ../
       dockerfile: docker/Dockerfile.keypad
+    stdin_open: true
+    tty: true
     environment:
       - CLUSTER_IP=keypad
       - CLUSTER_PORT=2552

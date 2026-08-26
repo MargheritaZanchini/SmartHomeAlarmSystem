@@ -7,6 +7,7 @@ import smartHomeAlarm.CborSerializable
 import smartHomeAlarm.smartHomeAlarmProtocol.*
 import smartHomeAlarm.smartHomeAlarmProtocol.zones.{Garden, GroundFloor, UpperFloor}
 
+import java.nio.file.{Files, Paths}
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
 
@@ -36,9 +37,8 @@ object SmartHomeAlarmGuardian:
 
   //finite state machine
 
-  def apply():
-  Behavior[Command] =
-    Behaviors.setup: context =>
+  def apply(): Behavior[Command] = {
+    val initialState = Behaviors.setup[Command] { context =>
 
       //il guardian si registra al receptionist in modo che gli altri possano mandargli messaggi
       context.system.receptionist ! Receptionist.Register(guardianServiceKey, context.self)
@@ -46,8 +46,21 @@ object SmartHomeAlarmGuardian:
       //vengono definiti i router per mandare i messaggi all'alarm e al userInteraction
       val alarm = context.spawn(Routers.group(Alarm.alarmServiceKey), "Alarm")
       val userInteraction = context.spawn(Routers.group(UserInteraction.keyPadServiceKey), "keyboardPin")
-      
-      disarmed(context, alarm)
+
+      val path = Paths.get("guardian-started.lock")
+
+      if Files.notExists(path) then
+        Files.createFile(path)
+        context.log.info("Going to disarmed.")
+        disarmed(context, alarm)
+      else
+        //file esiste: appena rinati dopo un crash
+        context.log.warn("Restart after a crash detected. Going to recovery.")
+        recovery(context, alarm)
+    }
+
+      Behaviors.supervise(initialState).onFailure(SupervisorStrategy.restart)
+  }
 
   private def recovery(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                       ): Behavior[Command] =
@@ -59,6 +72,9 @@ object SmartHomeAlarmGuardian:
           } else {
             Behaviors.same
           }
+        case DetectedMovement(MotionDetected(sensorID)) =>
+          context.log.info("Ignored movement from sensor {} because system is in recovery.", sensorID)
+          Behaviors.same
         case _ => Behaviors.same
 
   private def disarmed(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]

@@ -8,12 +8,6 @@ import smartHomeAlarm.smartHomeAlarmProtocol.sensorsType.*
 import java.util.UUID
 
 object SmartHomeAlarmApp:
-//  @main def app(): Unit =
-//
-//    val system = ActorSystem(SmartHomeAlarmGuardian(), "SmartHomeSystem")
-//    system.log.info("Smart Home Alarm System activated")
-
-  
   @main def spawnAlarm(): Unit =
     val config = ConfigFactory.load("application.conf")
     val _ = ActorSystem[Alarm.Command](Alarm(), "Clustered-SmartHomeAlarmSystem")

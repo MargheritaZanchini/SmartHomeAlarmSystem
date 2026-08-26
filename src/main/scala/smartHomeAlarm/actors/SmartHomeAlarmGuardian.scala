@@ -4,6 +4,7 @@ import org.apache.pekko.actor.typed.receptionist.{Receptionist, ServiceKey}
 import org.apache.pekko.actor.typed.scaladsl.*
 import org.apache.pekko.actor.typed.{Behavior, *}
 import smartHomeAlarm.CborSerializable
+import smartHomeAlarm.actors.SmartHomeAlarmGuardian.{disarmed, recovery}
 import smartHomeAlarm.smartHomeAlarmProtocol.*
 import smartHomeAlarm.smartHomeAlarmProtocol.zones.{Garden, GroundFloor, UpperFloor}
 
@@ -49,18 +50,25 @@ object SmartHomeAlarmGuardian:
 
       val path = Paths.get("guardian-started.lock")
 
-      if Files.notExists(path) then
-        Files.createFile(path)
-        context.log.info("Going to disarmed.")
-        disarmed(context, alarm)
-      else
-        //file esiste: appena rinati dopo un crash
-        context.log.warn("Restart after a crash detected. Going to recovery.")
-        recovery(context, alarm)
+      checkRecovery(context, alarm)
     }
 
       Behaviors.supervise(initialState).onFailure(SupervisorStrategy.restart)
   }
+
+  private def checkRecovery(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
+                           ): Behavior[Command] =
+
+    val path = Paths.get("guardian-started.lock")
+
+    if Files.notExists(path) then
+      Files.createFile(path)
+      context.log.info("Going to disarmed.")
+      disarmed(context, alarm)
+    else
+      //file esiste: appena rinati dopo un crash
+      context.log.warn("Restart after a crash detected. Going to recovery.")
+      recovery(context, alarm)
 
   private def recovery(context: ActorContext[Command], alarm: ActorRef[Alarm.Command]
                       ): Behavior[Command] =
